@@ -31,6 +31,8 @@ pub struct Header {
     #[serde(default)]
     pub title: String,
     #[serde(default)]
+    pub date: Option<String>,
+    #[serde(default)]
     pub math: MathHeader,
 }
 
