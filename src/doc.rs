@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Clone)]
@@ -24,15 +24,17 @@ impl<'a> Doc<'a> {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct Header {
+    #[serde(default, rename = "type")]
+    pub content_type: Option<String>,
     #[serde(default)]
     pub title: String,
     #[serde(default)]
     pub math: MathHeader,
 }
 
-#[derive(Debug, Clone, Deserialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct MathHeader {
     #[serde(default)]
     pub macros: HashMap<String, String>,

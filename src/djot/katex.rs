@@ -1,7 +1,9 @@
 use jotdown::{Container, Event};
 use katex::Opts;
 use thiserror::Error;
+use tracing::trace;
 
+/// Render math to HTML using KaTeX.
 #[derive(Debug, Clone)]
 pub struct KatexMath<'a, I> {
     inner: I,
@@ -35,6 +37,12 @@ where
             event => return Some(Ok(event)),
         };
 
+        if display {
+            trace!("found display math");
+        } else {
+            trace!("found inline math");
+        }
+
         let mut math = String::new();
 
         loop {
@@ -65,10 +73,13 @@ where
     }
 }
 
+/// Error produced by [`KatexMath`].
 #[derive(Debug, Clone, Error)]
 pub enum KatexMathError {
-    #[error("error while rendering katex math")]
+    /// Error while rendering KaTeX math.
+    #[error("failed to render katex math: {0}")]
     Katex(#[from] katex::Error),
+    /// Unexpected [`Event`] in math block.
     #[error("unexpected event in math block")]
     Unexpected,
 }

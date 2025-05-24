@@ -1,7 +1,11 @@
 use inkjet::{Highlighter, Language};
 use jotdown::{Container, Event};
 use thiserror::Error;
+use tracing::{instrument, trace, warn};
 
+/// Render code blocks to HTML using Inkjet.
+///
+/// Code blocks for languages that are not supported by Inkjet are left unmodified.
 #[derive(Clone)]
 pub struct InkjetCode<'a, I> {
     inner: I,
@@ -35,6 +39,8 @@ where
             event => return Some(Ok(event)),
         };
 
+        trace!("code block with language `{}`", language);
+
         let mut code = String::new();
 
         loop {
@@ -46,6 +52,8 @@ where
         }
 
         let Some(language) = Language::from_token(language) else {
+            trace!("language `{}` not supported by Inkjet", language);
+
             self.buffer.extend([
                 Event::End(Container::CodeBlock { language }),
                 Event::Str(code.into()),
@@ -78,10 +86,13 @@ where
     }
 }
 
+/// Error produced by [`InkjetCode`].
 #[derive(Debug, Error)]
 pub enum InkjetCodeError {
-    #[error("error while rendering code block")]
+    /// Error while rendering code block.
+    #[error("failed to render code block with inkjet: {0}")]
     Inkjet(#[from] inkjet::InkjetError),
+    /// Unexpected [`Event`] in code block.
     #[error("unexpected event in code block")]
     Unexpected,
 }

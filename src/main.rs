@@ -1,27 +1,14 @@
 use anyhow::Result;
-use clap::Parser;
-use clap_stdin::FileOrStdin;
-use cli::{Cli, Command};
-use doc::Doc;
-use inkjet::Highlighter;
-use jotdown::html::render_to_string;
-use passes::{error::ShowError, inkjet::InkjetCode, katex::KatexMath};
+use clap::Parser as _;
+use cli::Cli;
 
 pub mod cli;
+pub mod djot;
 pub mod doc;
-pub mod passes;
 
 fn main() -> Result<()> {
-    let cli = Cli::parse();
-
-    match cli.command {
-        Command::Render(render) => {
-            println!("{:?}", render.output_format);
-            println!("{}", render.input.contents()?);
-        }
-    }
-
-    Ok(())
+    tracing_subscriber::fmt::init();
+    Cli::parse().run()
 }
 
 // fn main() -> Result<()> {
