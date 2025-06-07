@@ -1,0 +1,17 @@
+[package]
+name = "scribe-common"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.98"
+chrono = "0.4.41"
+inkjet = "0.11.1"
+jotdown = "0.8.0"
+katex = "0.4.6"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_yaml_ng = "0.10.0"
+tera = "1.20.0"
+thiserror = "2.0.12"
+tinyvec = { version = "1.9.0", features = ["alloc"] }
+tracing = "0.1.41"

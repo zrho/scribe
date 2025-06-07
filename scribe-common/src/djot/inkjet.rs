@@ -1,7 +1,7 @@
 use inkjet::{Highlighter, Language};
 use jotdown::{Container, Event};
 use thiserror::Error;
-use tracing::{instrument, trace, warn};
+use tracing::trace;
 
 /// Render code blocks to HTML using Inkjet.
 ///
