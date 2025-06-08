@@ -5,8 +5,8 @@ use clap::Parser as _;
 use tracing::{info, instrument};
 
 use crate::{
-    config::{NOTES_INPUT_DIR, NOTES_OUTPUT_DIR},
-    render::render_note_files,
+    config::{ASSETS_DIR, DIST_DIR, NOTES_INPUT_DIR, NOTES_OUTPUT_DIR},
+    render::{copy_static_assets, render_note_files},
     templates::Templates,
 };
 
@@ -35,11 +35,11 @@ pub enum Commands {
 }
 
 pub fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Build {} => {
-            info!("building notes...");
             build()?;
         }
         Commands::Watch {} => {
@@ -61,9 +61,14 @@ pub fn main() -> Result<()> {
 
 #[instrument(name = "build")]
 fn build() -> Result<()> {
+    info!("building notes...");
     let notes_input_dir: PathBuf = NOTES_INPUT_DIR.into();
     let notes_output_dir: PathBuf = NOTES_OUTPUT_DIR.into();
+    let dist_dir: PathBuf = DIST_DIR.into();
+    let assets_dir: PathBuf = ASSETS_DIR.into();
     let templates = Templates::new()?;
+
     render_note_files(&notes_input_dir, &notes_output_dir, &templates)?;
+    copy_static_assets(&assets_dir, &dist_dir)?;
     Ok(())
 }

@@ -22,3 +22,5 @@ impl Config {
 pub const TEMPLATES_DIR: &'static str = "templates/";
 pub const NOTES_INPUT_DIR: &'static str = "notes/";
 pub const NOTES_OUTPUT_DIR: &'static str = "dist/notes/";
+pub const DIST_DIR: &'static str = "dist/";
+pub const ASSETS_DIR: &'static str = "assets/";

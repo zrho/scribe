@@ -4,9 +4,8 @@ use crate::{header::Header, templates::Templates};
 use anyhow::Result;
 use inkjet::Highlighter;
 use scribe_common::djot::{DemoteHeadings, InkjetCode, KatexMath, ShowErrors, parse_frontmatter};
-use tracing::instrument;
+use tracing::{Level, info, instrument};
 
-#[instrument(skip(templates), name = "rendering note files")]
 pub fn render_note_files(input_dir: &Path, output_dir: &Path, templates: &Templates) -> Result<()> {
     let pattern = input_dir.join("*.dj");
     let glob_pattern = pattern.to_string_lossy();
@@ -25,12 +24,13 @@ pub fn render_note_files(input_dir: &Path, output_dir: &Path, templates: &Templa
     Ok(())
 }
 
-#[instrument(err, skip(templates))]
+#[instrument(err, skip(templates, output_file))]
 pub fn render_note_file(
     input_file: &Path,
     output_file: &Path,
     templates: &Templates,
 ) -> Result<()> {
+    info!("rendering note...");
     let source = fs::read_to_string(input_file)?;
     let html = render_note(&source, templates)?;
     fs::write(output_file, html)?;
@@ -42,6 +42,7 @@ pub fn render_note(source: &str, templates: &Templates) -> Result<String> {
 
     let katex_opts = katex::Opts::builder()
         .macros(header.math.macros.clone())
+        .output_type(katex::OutputType::Mathml)
         .build()
         .unwrap();
 
@@ -57,4 +58,32 @@ pub fn render_note(source: &str, templates: &Templates) -> Result<String> {
 
     let html = templates.render_note(&header, &body)?;
     Ok(html)
+}
+
+pub fn copy_static_assets(assets_dir: &Path, dist_dir: &Path) -> Result<()> {
+    if !assets_dir.exists() {
+        return Ok(());
+    }
+
+    fs::create_dir_all(dist_dir)?;
+    let glob_pattern = format!("{}/**/*", assets_dir.display());
+
+    for entry in glob::glob(&glob_pattern)? {
+        let path = entry?;
+
+        if path.is_file() {
+            let rel_path = path.strip_prefix(assets_dir)?;
+            let dest_path = dist_dir.join(rel_path);
+
+            // Create parent directories if they don't exist
+            if let Some(parent) = dest_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+
+            fs::copy(&path, &dest_path)?;
+            info!("Copied asset: {:?}", rel_path);
+        }
+    }
+
+    Ok(())
 }
