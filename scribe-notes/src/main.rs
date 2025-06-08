@@ -1,7 +1,19 @@
+use std::path::PathBuf;
+
 use anyhow::Result;
 use clap::Parser as _;
+use tracing::{info, instrument};
+
+use crate::{
+    config::{NOTES_INPUT_DIR, NOTES_OUTPUT_DIR},
+    render::render_note_files,
+    templates::Templates,
+};
 
 pub mod config;
+pub mod header;
+pub mod render;
+pub mod templates;
 
 #[derive(clap::Parser)]
 #[command(author, version, about, long_about = None)]
@@ -27,8 +39,8 @@ pub fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Build {} => {
-            println!("Building project...");
-            // Add build logic here
+            info!("building notes...");
+            build()?;
         }
         Commands::Watch {} => {
             println!("Watching for changes...");
@@ -44,5 +56,14 @@ pub fn main() -> Result<()> {
         }
     }
 
+    Ok(())
+}
+
+#[instrument(name = "build")]
+fn build() -> Result<()> {
+    let notes_input_dir: PathBuf = NOTES_INPUT_DIR.into();
+    let notes_output_dir: PathBuf = NOTES_OUTPUT_DIR.into();
+    let templates = Templates::new()?;
+    render_note_files(&notes_input_dir, &notes_output_dir, &templates)?;
     Ok(())
 }

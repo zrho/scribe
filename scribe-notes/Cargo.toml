@@ -5,11 +5,18 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"
+axum = "0.8.4"
 clap = { version = "4.5.39", features = ["derive"] }
+glob = "0.3.2"
+inkjet = "0.11.1"
+jotdown = "0.8.0"
+katex = "0.4.6"
+notify = "8.0.0"
 scribe-common = { version = "0.1.0", path = "../scribe-common" }
 serde = { version = "1.0.219", features = ["derive"] }
 tera = "1.20.0"
 thiserror = "2.0.12"
+tokio = "1.45.1"
 toml = "0.8.23"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"

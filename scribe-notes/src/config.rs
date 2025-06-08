@@ -3,22 +3,12 @@ use serde::Deserialize;
 
 /// Notes configuration.
 #[derive(Debug, Clone, Deserialize)]
-pub struct Config {
-    /// The templates directory.
-    #[serde(default = "default_template_path")]
-    pub templates: String,
-}
+pub struct Config {}
 
 impl Default for Config {
     fn default() -> Self {
-        Self {
-            templates: default_template_path(),
-        }
+        Self {}
     }
-}
-
-fn default_template_path() -> String {
-    "templates/".into()
 }
 
 impl Config {
@@ -28,3 +18,7 @@ impl Config {
         Ok(config)
     }
 }
+
+pub const TEMPLATES_DIR: &'static str = "templates/";
+pub const NOTES_INPUT_DIR: &'static str = "notes/";
+pub const NOTES_OUTPUT_DIR: &'static str = "dist/notes/";
