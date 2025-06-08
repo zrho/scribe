@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::mpsc};
 
 use anyhow::Result;
 use clap::Parser as _;
-use tracing::{info, instrument};
+use tracing::{error, info, instrument, trace};
 
 use crate::{
     config::{ASSETS_DIR, DIST_DIR, NOTES_INPUT_DIR, NOTES_OUTPUT_DIR},
@@ -44,11 +44,10 @@ pub async fn main() -> Result<()> {
             build()?;
         }
         Commands::Watch {} => {
-            println!("Watching for changes...");
-            // Add watch logic here
+            watch()?;
         }
         Commands::Serve {} => {
-            build()?;
+            watch()?;
             serve().await?;
         }
         Commands::Clean {} => {
@@ -71,6 +70,45 @@ fn build() -> Result<()> {
 
     render_note_files(&notes_input_dir, &notes_output_dir, &templates)?;
     copy_static_assets(&assets_dir, &dist_dir)?;
+    Ok(())
+}
+
+fn watch() -> Result<()> {
+    use notify::Event;
+    use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+    use std::time::Duration;
+
+    std::thread::spawn(|| -> Result<()> {
+        let (tx, rx) = mpsc::channel();
+        let _ = tx.send(Ok(Event::default()));
+
+        let mut watcher = RecommendedWatcher::new(tx, Config::default())?;
+        // Watch the notes directory for changes
+        watcher.watch(NOTES_INPUT_DIR.as_ref(), RecursiveMode::Recursive)?;
+        watcher.watch(ASSETS_DIR.as_ref(), RecursiveMode::Recursive)?;
+
+        for res in rx {
+            match res {
+                Ok(event) => {
+                    trace!("watch event: {:?}", event);
+                    let result = build();
+
+                    if let Err(error) = result {
+                        error!("Error while building: {:?}", error);
+                    }
+                }
+                Err(e) => {
+                    error!("Watch error: {:?}", e);
+                }
+            }
+
+            std::thread::sleep(Duration::from_millis(100));
+        }
+
+        info!("stopped watching");
+        Ok(())
+    });
+
     Ok(())
 }
 
