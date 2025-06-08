@@ -34,7 +34,8 @@ pub enum Commands {
     Clean {},
 }
 
-pub fn main() -> Result<()> {
+#[tokio::main]
+pub async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let cli = Cli::parse();
 
@@ -47,8 +48,8 @@ pub fn main() -> Result<()> {
             // Add watch logic here
         }
         Commands::Serve {} => {
-            println!("Serving application...");
-            // Add serve logic here
+            build()?;
+            serve().await?;
         }
         Commands::Clean {} => {
             println!("Cleaning build artifacts...");
@@ -70,5 +71,16 @@ fn build() -> Result<()> {
 
     render_note_files(&notes_input_dir, &notes_output_dir, &templates)?;
     copy_static_assets(&assets_dir, &dist_dir)?;
+    Ok(())
+}
+
+async fn serve() -> Result<()> {
+    use axum::Router;
+    use tower_http::services::ServeDir;
+
+    info!("Starting HTTP server...");
+    let app = Router::new().fallback_service(ServeDir::new(DIST_DIR));
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
+    axum::serve(listener, app).await?;
     Ok(())
 }
