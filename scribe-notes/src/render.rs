@@ -42,7 +42,7 @@ pub fn render_note(source: &str, templates: &Templates) -> Result<String> {
 
     let katex_opts = katex::Opts::builder()
         .macros(header.math.macros.clone())
-        .output_type(katex::OutputType::Mathml)
+        .output_type(katex::OutputType::Html)
         .build()
         .unwrap();
 
