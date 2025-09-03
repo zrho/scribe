@@ -8,8 +8,8 @@ use clap::Parser as _;
 use tracing::{error, info, instrument, trace};
 
 use crate::{
-    config::{ASSETS_DIR, DIST_DIR, NOTES_INPUT_DIR, NOTES_OUTPUT_DIR},
-    render::{copy_static_assets, render_note_files},
+    config::{ASSETS_DIR, DIST_DIR, NOTES_INPUT_DIR, NOTES_OUTPUT_DIR, TEMPLATES_DIR},
+    render::{copy_static_assets, render_index_file, render_note_files},
     templates::Templates,
 };
 
@@ -87,6 +87,7 @@ fn build() -> Result<()> {
     let assets_dir: PathBuf = ASSETS_DIR.into();
     let templates = Templates::new()?;
 
+    render_index_file(&notes_input_dir, &notes_output_dir, &templates)?;
     render_note_files(&notes_input_dir, &notes_output_dir, &templates)?;
     copy_static_assets(&assets_dir, &dist_dir)?;
     Ok(())
@@ -105,6 +106,7 @@ fn watch() -> Result<()> {
         // Watch the notes directory for changes
         watcher.watch(NOTES_INPUT_DIR.as_ref(), RecursiveMode::Recursive)?;
         watcher.watch(ASSETS_DIR.as_ref(), RecursiveMode::Recursive)?;
+        watcher.watch(TEMPLATES_DIR.as_ref(), RecursiveMode::Recursive)?;
 
         for res in rx {
             match res {
