@@ -1,6 +1,9 @@
-use std::{path::PathBuf, sync::mpsc};
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc,
+};
 
-use anyhow::Result;
+use anyhow::{Result, bail};
 use clap::Parser as _;
 use tracing::{error, info, instrument, trace};
 
@@ -32,6 +35,19 @@ pub enum Commands {
     Serve {},
     /// Clean build artifacts
     Clean {},
+    /// Creare a new note.
+    New(NewCommand),
+}
+
+/// Create a new note.
+#[derive(Debug, clap::Args)]
+pub struct NewCommand {
+    /// The name of the node to create.
+    name: String,
+
+    /// Open the newly created note in the $EDITOR.
+    #[clap(short = 'e')]
+    edit: bool,
 }
 
 #[tokio::main]
@@ -39,7 +55,7 @@ pub async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let cli = Cli::parse();
 
-    match &cli.command {
+    match cli.command {
         Commands::Build {} => {
             build()?;
         }
@@ -53,6 +69,9 @@ pub async fn main() -> Result<()> {
         Commands::Clean {} => {
             println!("Cleaning build artifacts...");
             // Add clean logic here
+        }
+        Commands::New(cmd) => {
+            new_note(cmd)?;
         }
     }
 
@@ -120,5 +139,41 @@ async fn serve() -> Result<()> {
     let app = Router::new().fallback_service(ServeDir::new(DIST_DIR));
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await?;
     axum::serve(listener, app).await?;
+    Ok(())
+}
+
+fn new_note(cmd: NewCommand) -> Result<()> {
+    let date = chrono::Local::now().format("%Y-%m-%d").to_string();
+    let note_dir = Path::new(NOTES_INPUT_DIR);
+    let note_path = note_dir.join(format!("{}-{}.dj", date, cmd.name));
+
+    if !note_path.exists() {
+        info!("creating note at: {}", note_path.display());
+        std::fs::write(&note_path, "")?;
+        info!("note created");
+    } else {
+        info!("note already exists at: {}", note_path.display());
+    }
+
+    if cmd.edit {
+        info!("opening note in editor");
+        open_editor(&note_path)?;
+    }
+
+    Ok(())
+}
+
+fn open_editor(path: &Path) -> Result<()> {
+    let Ok(editor) = std::env::var("EDITOR") else {
+        info!("EDITOR environment variable not set");
+        return Ok(());
+    };
+
+    let status = std::process::Command::new(editor).arg(path).status()?;
+
+    if !status.success() {
+        bail!("editor exited with non-zero status: {}", status);
+    }
+
     Ok(())
 }
