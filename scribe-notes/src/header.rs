@@ -9,6 +9,8 @@ pub struct Header {
     pub date: Option<String>,
     #[serde(default)]
     pub math: MathHeader,
+    #[serde(default)]
+    pub draft: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, Default)]
