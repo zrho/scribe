@@ -4,20 +4,24 @@ use crate::{
     header::Header,
     templates::{NoteData, Templates},
 };
-use anyhow::Result;
+use anyhow::{Context, Result};
 use inkjet::Highlighter;
 use scribe_common::djot::{DemoteHeadings, InkjetCode, KatexMath, ShowErrors, parse_frontmatter};
 use tracing::{Level, info, instrument};
 
+#[instrument(err, skip(input_dir, output_dir, templates))]
 pub fn render_index_file(input_dir: &Path, output_dir: &Path, templates: &Templates) -> Result<()> {
     let pattern = input_dir.join("*.dj");
     let glob_pattern = pattern.to_string_lossy();
 
     let mut headers = Vec::new();
 
+    // Create output directory if it doesn't exist.
+    fs::create_dir_all(output_dir)?;
+
     for entry in glob::glob(&glob_pattern)? {
         let input_file = entry?;
-        let source = fs::read_to_string(&input_file)?;
+        let source = fs::read_to_string(&input_file).context("error reading note file")?;
         let (header, _) = parse_frontmatter::<Header>(&source)?;
         let link = format!("/notes/{}.html", input_file.file_stem().unwrap().display());
         headers.push(NoteData { header, link });
@@ -31,6 +35,7 @@ pub fn render_index_file(input_dir: &Path, output_dir: &Path, templates: &Templa
     Ok(())
 }
 
+#[instrument(err, skip(input_dir, output_dir, templates))]
 pub fn render_note_files(input_dir: &Path, output_dir: &Path, templates: &Templates) -> Result<()> {
     let pattern = input_dir.join("*.dj");
     let glob_pattern = pattern.to_string_lossy();
