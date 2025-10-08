@@ -1,2 +1,2 @@
 pub mod djot;
-pub mod latex;
+pub mod tools;
