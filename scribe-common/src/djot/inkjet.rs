@@ -74,7 +74,7 @@ where
             Err(err) => return Some(Err(err.into())),
         };
 
-        let result = format!("<pre><code>\n{}\n</code></pre>", result);
+        let result = format!("<pre><code>{}</code></pre>", result);
 
         self.buffer.extend([
             Event::End(Container::RawBlock { format: "html" }),
